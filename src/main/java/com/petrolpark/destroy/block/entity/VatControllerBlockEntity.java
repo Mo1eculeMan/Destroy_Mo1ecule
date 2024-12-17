@@ -231,12 +231,12 @@ public class VatControllerBlockEntity extends SmartBlockEntity implements IHaveL
                 cachedMixture.reactForTick(context, getSimulationLevel());
                 shouldUpdateFluidMixture = true;
 
+		// Put all Items back in the Inventory
+            	for (ItemStack itemStack : availableItemStacks) {
+              		ItemHandlerHelper.insertItemStacked(inventory, itemStack, false);
+          	};
+		    
                 if (!cachedMixture.isAtEquilibrium()) advancementBehaviour.awardDestroyAdvancement(DestroyAdvancementTrigger.USE_VAT);
-            };
-
-            // Put all Items back in the Inventory
-            for (ItemStack itemStack : availableItemStacks) {
-                ItemHandlerHelper.insertItemStacked(inventory, itemStack, false);
             };
 
             if (shouldUpdateFluidMixture) {
