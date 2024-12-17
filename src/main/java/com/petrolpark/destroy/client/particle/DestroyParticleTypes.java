@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import com.petrolpark.destroy.Destroy;
 import com.petrolpark.destroy.client.particle.data.GasParticleData;
+import com.petrolpark.destroy.client.particle.data.BoilingFluidBubbleParticleData;
 import com.simibubi.create.foundation.particle.ICustomParticleData;
 import com.simibubi.create.foundation.utility.Lang;
 
@@ -19,7 +20,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public enum DestroyParticleTypes {
 
-    BOILING_FLUID_BUBBLE(BoilingFluidBubbleParticle.Data::new),
+    BOILING_FLUID_BUBBLE(BoilingFluidBubbleParticleData::new),
     DISTILLATION(GasParticleData::new),
     EVAPORATION(GasParticleData::new),
     RAIN(RainParticle.Data::new),

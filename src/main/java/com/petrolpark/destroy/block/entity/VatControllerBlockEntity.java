@@ -24,7 +24,7 @@ import com.petrolpark.destroy.chemistry.legacy.LegacyMixture;
 import com.petrolpark.destroy.chemistry.legacy.LegacyReaction;
 import com.petrolpark.destroy.chemistry.legacy.ReadOnlyMixture;
 import com.petrolpark.destroy.chemistry.legacy.LegacyMixture.ReactionContext;
-import com.petrolpark.destroy.client.particle.BoilingFluidBubbleParticle;
+import com.petrolpark.destroy.client.particle.data.BoilingFluidBubbleParticleData;
 import com.petrolpark.destroy.config.DestroyAllConfigs;
 import com.petrolpark.destroy.fluid.DestroyFluids;
 import com.petrolpark.destroy.fluid.MixtureFluid;
@@ -668,7 +668,7 @@ public class VatControllerBlockEntity extends SmartBlockEntity implements IHaveL
         Vat vat = vatOptional.get();
         if (cachedMixtureBoiling) { // Bubble particles
             Vec3 position = getRandomParticlePosition(vat);
-            getLevel().addAlwaysVisibleParticle(new BoilingFluidBubbleParticle.Data(liquid), position.x, position.y, position.z, 0d, 0d, 0d);
+            getLevel().addAlwaysVisibleParticle(new BoilingFluidBubbleParticleData(liquid), position.x, position.y, position.z, 0d, 0d, 0d);
         };
         if (cachedMixtureReacting) { // Splash particles
             
