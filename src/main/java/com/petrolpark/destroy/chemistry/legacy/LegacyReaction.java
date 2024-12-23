@@ -15,6 +15,7 @@ import com.petrolpark.destroy.Destroy;
 import com.petrolpark.destroy.chemistry.api.error.ChemistryException;
 import com.petrolpark.destroy.chemistry.legacy.genericreaction.GenericReaction;
 import com.petrolpark.destroy.chemistry.legacy.index.DestroyMolecules;
+import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -39,6 +40,8 @@ public class LegacyReaction {
     };
 
     private Map<LegacySpecies, Integer> reactants, products, orders;
+    
+    private List<Pair<Supplier<Item>, Double>> itemProducts;
 
     /**
      * All {@link IItemReactant Item Reactants} (and catalysts) this Reaction.
@@ -166,6 +169,10 @@ public class LegacyReaction {
         return itemReactants;
     };
 
+    public List<Pair<Supplier<Item>, Double>> getItemProducts() {
+    	return itemProducts;
+    }
+    
     /**
      * Get the moles of this Reaction that will occur once all {@link LegacyReaction#itemReactants Item requirements} are fulfilled.
      */
@@ -385,6 +392,8 @@ public class LegacyReaction {
             reaction.reactants = new HashMap<>();
             reaction.products = new HashMap<>();
             reaction.orders = new HashMap<>();
+            
+            reaction.itemProducts = new ArrayList<>();
 
             reaction.itemReactants = new ArrayList<>();
             reaction.molesPerItem = 0f;
@@ -555,6 +564,18 @@ public class LegacyReaction {
         };
 
         /**
+         * Add an item product blah blah. does not do any real checking.
+         * @param item item
+         * @param count items per mole of reaction
+         * @return
+         */
+        public ReactionBuilder addItemProduct(Supplier<Item> item, double count) {
+        	if(item == null) return this;
+        	reaction.itemProducts.add(Pair.of(item, count));
+        	return this;
+        }
+        
+        /**
          * Add a {@link LegacySpecies} which does not get consumed in this Reaction, but which affects the rate.
          * @param molecule
          * @param order If this is is 0, the rate will not be affected but the Molecule will need to be present for the Reaction to proceed
@@ -682,8 +703,8 @@ public class LegacyReaction {
                 .addProduct(DestroyMolecules.PROTON)
                 .addProduct(conjugateBase)
                 .activationEnergy(GAS_CONSTANT * 0.298f) // Makes the pKa accurate at room temperature
-                .preexponentialFactor((float)Math.pow(10, -pKa))
-                .dontIncludeInJei()
+                .preexponentialFactor((float)Math.pow(10, -pKa/2 + 1))
+                .displayAsReversible()
                 .build();
 
             // Association
@@ -693,7 +714,7 @@ public class LegacyReaction {
                 .addReactant(DestroyMolecules.PROTON)
                 .addProduct(acid)
                 .activationEnergy(GAS_CONSTANT * 0.298f)
-                .preexponentialFactor(1f)
+                .preexponentialFactor((float)Math.pow(10, pKa/2 + 1))
                 .dontIncludeInJei()
                 .build();
 
@@ -856,13 +877,13 @@ public class LegacyReaction {
         private String reactionString() {
             String reactionString = "";
             for (LegacySpecies reactant : reaction.reactants.keySet()) {
-                reactionString += reactant.getSerlializedMolecularFormula(false);
+                reactionString += reactant.getSerializedMolecularFormula(false);
                 reactionString += " + ";
             };
             if (reaction.reactants.keySet().size() > 0) reactionString = reactionString.substring(0, reactionString.length() - 3);
             reactionString = reactionString + " => ";
             for (LegacySpecies product : reaction.products.keySet()) {
-                reactionString += product.getSerlializedMolecularFormula(false);
+                reactionString += product.getSerializedMolecularFormula(false);
                 reactionString += " + ";
             };
             if (reaction.products.keySet().size() > 0) reactionString = reactionString.substring(0, reactionString.length() - 3);

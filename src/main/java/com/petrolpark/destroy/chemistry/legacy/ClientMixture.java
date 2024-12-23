@@ -21,10 +21,10 @@ public class ClientMixture extends ReadOnlyMixture {
         float totalGreen = 0;
         float totalBlue = 0;
         int totalAlpha = 64;
-        for (Entry<LegacySpecies, Float> entry : contents.entrySet()) {
+        for (Entry<LegacySpecies, Double> entry : contents.entrySet()) {
             //if (entry.getKey().isColorless()) continue;
             Color color = new Color(entry.getKey().getColor());
-            float colorContribution = entry.getValue() * color.getAlphaAsFloat();
+            double colorContribution = entry.getValue() * color.getAlphaAsFloat();
             totalColorContribution += colorContribution;
             totalRed += color.getRed() * colorContribution;
             totalGreen += color.getGreen() * colorContribution;
@@ -58,7 +58,7 @@ public class ClientMixture extends ReadOnlyMixture {
             List<LegacySpecies> solvents = new ArrayList<>();
             List<LegacySpecies> impurities = new ArrayList<>();
             boolean thereAreNeutralMolecules = false;
-            for (Entry<LegacySpecies, Float> entry : contents.entrySet()) {
+            for (Entry<LegacySpecies, Double> entry : contents.entrySet()) {
                 LegacySpecies molecule = entry.getKey();
                 if (neutral && (molecule == DestroyMolecules.HYDROXIDE || molecule == DestroyMolecules.PROTON)) continue;
                 if (entry.getValue() < IMPURITY_THRESHOLD) {

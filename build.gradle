@@ -63,7 +63,6 @@ minecraft {
             arg '-mixin.config=petrolpark.mixins.json'
             arg '-mixin.config=destroy.mixins.json'
             arg '-mixin.config=flywheel.mixins.json'
-            jvmArgs += ['-XX:+AllowEnhancedClassRedefinition']
             property 'forge.logging.console.level', 'info'
             mods {
                 destroy {
@@ -77,7 +76,6 @@ minecraft {
             arg '-mixin.config=create.mixins.json'
             arg '-mixin.config=petrolpark.mixins.json'
             arg '-mixin.config=destroy.mixins.json'
-            jvmArgs += ['-XX:+AllowEnhancedClassRedefinition']
             property 'forge.logging.console.level', 'info'
             mods {
                 destroy {

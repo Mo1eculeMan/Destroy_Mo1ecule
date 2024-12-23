@@ -98,7 +98,7 @@ public class VatFluidTankBehaviour extends GeniusFluidTankBehaviour {
     };
 
     public ReadOnlyMixture getCombinedReadOnlyMixture() {
-        Map<LegacySpecies, Float> moleculesAndMoles = new HashMap<>();
+        Map<LegacySpecies, Double> moleculesAndMoles = new HashMap<>();
         ReadOnlyMixture mixture = new ReadOnlyMixture();
         int totalVolume = 0;
 
@@ -116,7 +116,7 @@ public class VatFluidTankBehaviour extends GeniusFluidTankBehaviour {
             totalVolume += gasStack.getAmount();
         };
 
-        for (Entry<LegacySpecies, Float> entry : moleculesAndMoles.entrySet()) {
+        for (Entry<LegacySpecies, Double> entry : moleculesAndMoles.entrySet()) {
             mixture.addMolecule(entry.getKey(), entry.getValue() / totalVolume); //TODO use different volume as this makes things slow
         };
 

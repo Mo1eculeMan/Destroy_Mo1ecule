@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.joml.Vector2i;
 
@@ -27,6 +28,7 @@ import com.petrolpark.destroy.recipe.ReactionRecipe.GenericReactionRecipe;
 import com.petrolpark.destroy.util.DestroyLang;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.item.TooltipHelper.Palette;
+import com.simibubi.create.foundation.utility.Pair;
 
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
@@ -38,6 +40,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 public class ReactionCategory<T extends ReactionRecipe> extends HoverableTextCategory<T> {
 
@@ -127,7 +131,7 @@ public class ReactionCategory<T extends ReactionRecipe> extends HoverableTextCat
             if (i >= 6) continue;
             if (!itemReactant.isCatalyst()) {
                 Vector2i pos = getReactantRenderPosition(i, numberOfReactants);
-                builder.addSlot(reaction.displayAsReversible() ? RecipeIngredientRole.CATALYST : RecipeIngredientRole.INPUT, pos.x, pos.y)
+                builder.addSlot(RecipeIngredientRole.INPUT, pos.x, pos.y)
                     .addItemStacks(itemReactant.getDisplayedItemStacks())
                     .addRichTooltipCallback(ReactionTooltipHelper.itemReactantTooltip(reaction, itemReactant))
                     .setBackground(getRenderedSlot(), -1, -1);
@@ -136,7 +140,8 @@ public class ReactionCategory<T extends ReactionRecipe> extends HoverableTextCat
         };
 
         Collection<PrecipitateReactionResult> precipitates = reaction.hasResult() ? reaction.getResult().getAllPrecipitates() : Collections.emptyList();
-
+        List<Pair<Supplier<Item>, Double>> itemProducts = reaction.getItemProducts();
+        
         int j = 0;
 
         int numberOfProducts = reaction.getProducts().size() + precipitates.size();
@@ -164,13 +169,22 @@ public class ReactionCategory<T extends ReactionRecipe> extends HoverableTextCat
 
         for (PrecipitateReactionResult precipitate : precipitates) {
             if (j >= 6) continue;
-            builder.addSlot(reaction.displayAsReversible() ? RecipeIngredientRole.CATALYST : RecipeIngredientRole.OUTPUT, productsXOffset + (19 * (j % l)), productYOffset+ (j / l) * 19)
+            builder.addSlot(RecipeIngredientRole.OUTPUT, productsXOffset + (19 * (j % l)), productYOffset+ (j / l) * 19)
                 .addItemStack(precipitate.getPrecipitate())
                 .addRichTooltipCallback(ReactionTooltipHelper.precipitateTooltip(reaction, precipitate))
                 .setBackground(getRenderedSlot(), -1, -1);
             j++;
         };
-
+        
+        for(Pair<Supplier<Item>, Double> entry : itemProducts) {
+        	if(j >= 6) continue;
+        	Item item = entry.getFirst().get();
+        	builder.addSlot(RecipeIngredientRole.OUTPUT, productsXOffset + (19 * (j % 1)), productYOffset + (j / l) * 19)
+        	.addItemStack(new ItemStack(item, 1))
+        	.addRichTooltipCallback(ReactionTooltipHelper.itemProductTooltip(reaction, item, entry.getSecond()))
+        	.setBackground(getRenderedSlot(), -1, -1);
+        }
+        
         int numberOfCatalysts = getNumberOfCatalysts(reaction);
         int m = 0;
         if (reaction.needsUV()) m++; // If there is UV catalyst, this is already drawn
@@ -198,7 +212,7 @@ public class ReactionCategory<T extends ReactionRecipe> extends HoverableTextCat
         if (DestroyAllConfigs.CLIENT.chemistry.nerdMode.get()) {
             builder.addSlot(RecipeIngredientRole.RENDER_ONLY, 163, 68)
                 .setOverlay(JEITextureDrawable.of(PetrolparkGuiTexture.JEI_NERD_EMOJI), 0, 1)
-                .addItemStack(DestroyItems.ABS.asStack()) // Dummy item so we actually get something generated
+                .addItemStack(DestroyItems.ABS.asStack().setHoverName(DestroyLang.translate("destroy.tooltip.reaction.kinetics_information").component())) // Dummy item so we actually get something generated
                 .addRichTooltipCallback(ReactionTooltipHelper.nerdModeTooltip(reaction));
         };
     };

@@ -40,6 +40,10 @@ public enum DestroyGuiTextures implements IGuiTexture {
 	VAT_CARD_SELECTED("vat", 116, 226, 102, 30),
 	VAT_CARD_ARROW("vat", 218, 226, 25, 30),
 	VAT_SCROLL_DOT("vat", 100, 226, 7, 8),
+	VAT_HEADER_LEFT("vat", 8, 0, 52, 15),
+	VAT_HEADER_RIGHT("vat", 196, 0, 52, 15),
+	VAT_ARROW_UNPRESSED("vat", 101, 235, 9, 8),
+	VAT_ARROW_PRESSED("vat", 101, 244, 9, 8),
 	VAT_QUANTITY_OBSERVER("logistics", 0, 0, 256, 95),
 	COLORIMETER("colorimeter", 0, 0, 256, 195),
 
@@ -134,7 +138,7 @@ public enum DestroyGuiTextures implements IGuiTexture {
 	};
 
 	private DestroyGuiTextures(String location, int startX, int startY, int width, int height) {
-		this(location, startX, startY, width, height, 256, 256);
+		this(location, startX, startY, width, height, 256, 256);	
 	};
 
     private DestroyGuiTextures(String location, int startX, int startY, int width, int height, int textureWidth, int textureHeight) {

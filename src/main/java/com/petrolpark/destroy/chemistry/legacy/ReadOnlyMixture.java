@@ -21,7 +21,11 @@ import com.simibubi.create.foundation.utility.NBTHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * A {@link com.petrolpark.destroy.chemistry.legacy.LegacyMixture Mixture} which cannot react.
@@ -69,20 +73,25 @@ public class ReadOnlyMixture {
     /**
      * The {@link LegacySpecies Molecules} contained by this Mixture, mapped to their concentrations (in moles per Bucket).
      */
-    protected Map<LegacySpecies, Float> contents;
+    protected Map<LegacySpecies, Double> contents;
 
     /**
      * The {@link LegacySpecies Molecules} in this Mixture, mapped to the proportion of which are gaseous. For example, {@code 0}
      * means this Molecule is entirely liquid or aqueous, {@code 0.5} means they are half liquid and half gaseous, and {@code 1}
      * means the Molecule is entirely gaseous in this Mixture.
      */
-    protected Map<LegacySpecies, Float> states;
+    protected Map<LegacySpecies, Double> states;
 
     /**
      * Whether any {@link LegacySpecies Molecules} are currently boiling or condensing (their {@link ReadOnlyMixture#states state} is not a whole number)
      */
     protected boolean boiling;
 
+    /**
+     * Concentration is expressed in items per bucket.
+     */
+    public Map<Item, Double> partiallyDissolvedItems;
+    
     public ReadOnlyMixture() {
         this(298f);
     };
@@ -94,6 +103,7 @@ public class ReadOnlyMixture {
         this.temperature = temperature;
         states = new HashMap<>();
         boiling = false;
+        partiallyDissolvedItems = new HashMap<>();
     };
 
     /**
@@ -108,11 +118,21 @@ public class ReadOnlyMixture {
         compound.put("Contents", NBTHelper.writeCompoundList(contents.entrySet().stream().filter(e -> e.getValue() > 0f).toList(), (entry) -> {
             CompoundTag moleculeTag = new CompoundTag();
             moleculeTag.putString("Molecule", entry.getKey().getFullID());
-            moleculeTag.putFloat("Concentration", entry.getValue());
-            float gaseous = states.get(entry.getKey());
-            if (gaseous != 1f && gaseous != 0f) moleculeTag.putFloat("Gaseous", states.get(entry.getKey())); // Only put the state if its not obvious from the temperature
+            moleculeTag.putDouble("Concentration", entry.getValue());
+            double gaseous = states.get(entry.getKey());
+            if (gaseous != 1f && gaseous != 0f) moleculeTag.putDouble("Gaseous", states.get(entry.getKey())); // Only put the state if its not obvious from the temperature
             return moleculeTag;
         }));
+
+        
+        if(!partiallyDissolvedItems.isEmpty()) {
+        	compound.put("PartiallyDissolvedItems", NBTHelper.writeCompoundList(partiallyDissolvedItems.entrySet().stream().toList(), entry -> {
+        		CompoundTag itemTag = new CompoundTag();
+        		itemTag.putString("Item", ForgeRegistries.ITEMS.getKey(entry.getKey()).toString());
+        		itemTag.putDouble("MolesPerBucket", entry.getValue());
+        		return itemTag;
+        	}));
+        }
         return compound;
     };
 
@@ -133,11 +153,21 @@ public class ReadOnlyMixture {
         contents.forEach(tag -> {
             CompoundTag moleculeTag = (CompoundTag) tag;
             LegacySpecies molecule = LegacySpecies.getMolecule(moleculeTag.getString("Molecule"));
-            mixture.addMolecule(molecule, moleculeTag.getFloat("Concentration"));
-            float state = moleculeTag.getFloat("Gaseous");
+            mixture.addMolecule(molecule, moleculeTag.getDouble("Concentration"));
+            double state = moleculeTag.getDouble("Gaseous");
             if (state != 0f && state != 1f) mixture.boiling = true;
             mixture.states.put(molecule, state);
         });
+
+        if(compound.contains("PartiallyDissolvedItems", Tag.TAG_LIST)) {
+        	ListTag items = compound.getList("PartiallyDissolvedItems", Tag.TAG_COMPOUND);
+        	items.forEach(tag -> {
+        		Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(((CompoundTag) tag).getString("Item")));
+        		if(item == null) return;
+        		mixture.partiallyDissolvedItems.put(item, ((CompoundTag) tag).getDouble("MolesPerBucket"));
+        	});
+        }
+        
         mixture.updateName();
         mixture.updateColor();
         return mixture;
@@ -195,7 +225,7 @@ public class ReadOnlyMixture {
      * @param molecule
      * @return 0 if the Mixture does not contain the given Molecule
      */
-    public float getConcentrationOf(LegacySpecies molecule) {
+    public double getConcentrationOf(LegacySpecies molecule) {
         if (contents.containsKey(molecule)) {
             return contents.get(molecule);
         } else {
@@ -207,9 +237,9 @@ public class ReadOnlyMixture {
      * Get the combined concentration of every Molecule in this Mixture.
      * @return in moles per bucket
      */
-    public float getTotalConcentration() {
-        float total = 0f;
-        for (Float concentration : contents.values()) {
+    public double getTotalConcentration() {
+        double total = 0f;
+        for (double concentration : contents.values()) {
             total += concentration;
         };
         return total;
@@ -236,7 +266,7 @@ public class ReadOnlyMixture {
     public boolean hasUsableMolecules(Predicate<LegacySpecies> molecules, float minConcentration, float maxConcentration, @Nullable Predicate<LegacySpecies> ignore) {
         if (ignore == null) ignore = (m) -> false;
         float combinedConcentration = 0f;
-        for (Entry<LegacySpecies, Float> entry : contents.entrySet()) {
+        for (Entry<LegacySpecies, Double> entry : contents.entrySet()) {
             if (ignore.test(entry.getKey())) continue; // If this Molecule is specified as ignoreable, ignore it.
             if (molecules.test(entry.getKey())) {
                 combinedConcentration += entry.getValue(); // If this passes the test, add it to the total
@@ -256,7 +286,7 @@ public class ReadOnlyMixture {
      * @param concentration
      * @return This Mixture
      */
-    public ReadOnlyMixture addMolecule(LegacySpecies molecule, float concentration) {
+    public ReadOnlyMixture addMolecule(LegacySpecies molecule, double concentration) {
 
         if (molecule == null || concentration == 0f) {
             return this;
@@ -267,7 +297,7 @@ public class ReadOnlyMixture {
         };
 
         contents.put(molecule, concentration);
-        states.put(molecule, molecule.getBoilingPoint() < temperature ? 1f : 0f);
+        states.put(molecule, molecule.getBoilingPoint() < temperature ? 1d : 0d);
 
         return this;
     };
@@ -287,7 +317,7 @@ public class ReadOnlyMixture {
     public String getContentsString() {
         String string = "";
         if (contents.isEmpty()) return string;
-        for (Entry<LegacySpecies, Float> entry : contents.entrySet()) {
+        for (Entry<LegacySpecies, Double> entry : contents.entrySet()) {
             string += entry.getKey().getFullID() + " (" + entry.getValue() + "M), ";
         };
         return string.substring(0, string.length() - 2);
@@ -309,7 +339,7 @@ public class ReadOnlyMixture {
         
         int quantityLabelLength = DestroyLang.quantity(0f, useMoles, concentrationFormatter).string().length() + 2;
         for (LegacySpecies molecule : molecules) {
-            float quantity = contents.get(molecule) * (useMoles ? amount / Constants.MILLIBUCKETS_PER_LITER: 1);
+            double quantity = contents.get(molecule) * (useMoles ? amount / Constants.MILLIBUCKETS_PER_LITER: 1);
             tooltip.add(i, DestroyLang.builder()
                 .space().space()
                 .add(Component.literal(monospace ? String.format("%1$"+quantityLabelLength+"s", DestroyLang.quantity(quantity, useMoles, concentrationFormatter).string()) : DestroyLang.quantity(quantity, useMoles, concentrationFormatter).string())) // Show concentration

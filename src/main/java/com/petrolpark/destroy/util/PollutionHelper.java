@@ -128,7 +128,7 @@ public class PollutionHelper {
     public static void polluteMixture(Level level, BlockPos pos, float multiplier, int amount, CompoundTag fluidTag) {
         ReadOnlyMixture mixture = ReadOnlyMixture.readNBT(ReadOnlyMixture::new, fluidTag.getCompound("Mixture"));
         for (LegacySpecies molecule : mixture.getContents(true)) {
-            float pollutionAmount = multiplier * mixture.getConcentrationOf(molecule) * amount / 1000; // One mole of polluting Molecule = one point of Pollution
+            double pollutionAmount = multiplier * mixture.getConcentrationOf(molecule) * amount / 1000; // One mole of polluting Molecule = one point of Pollution
             for (PollutionType pollutionType : PollutionType.values()) {
                 if (molecule.hasTag(pollutionType.moleculeTag)) {
                     if (pollutionAmount < 1) {

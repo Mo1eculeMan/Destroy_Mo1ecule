@@ -2,7 +2,11 @@ package com.petrolpark.destroy.block.entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -10,6 +14,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
+import com.petrolpark.destroy.Destroy;
 import com.petrolpark.destroy.advancement.DestroyAdvancementTrigger;
 import com.petrolpark.destroy.block.DestroyBlocks;
 import com.petrolpark.destroy.block.VatControllerBlock;
@@ -47,6 +52,7 @@ import com.simibubi.create.foundation.item.SmartInventory;
 import com.simibubi.create.foundation.item.TooltipHelper;
 import com.simibubi.create.foundation.recipe.RecipeFinder;
 import com.simibubi.create.foundation.utility.Lang;
+import com.simibubi.create.foundation.utility.NBTHelper;
 import com.simibubi.create.foundation.utility.Pair;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat.Chaser;
@@ -55,11 +61,14 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Rotation;
@@ -77,6 +86,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public class VatControllerBlockEntity extends SmartBlockEntity implements IHaveLabGoggleInformation, ISpecialWhenHovered, ThresholdSwitchObservable, ITransformableBlockEntity {
 
@@ -106,6 +116,7 @@ public class VatControllerBlockEntity extends SmartBlockEntity implements IHaveL
     protected LerpedFloat temperature = LerpedFloat.linear();
     protected boolean cachedMixtureBoiling = false;
     protected boolean cachedMixtureReacting = false;
+    public Map<LegacyReaction, Float> lastTickReactions = new HashMap<LegacyReaction, Float>(); //same as above
 
     protected VatFluidTankBehaviour tankBehaviour;
     protected LazyOptional<IFluidHandler> fluidCapability;
@@ -209,34 +220,55 @@ public class VatControllerBlockEntity extends SmartBlockEntity implements IHaveL
                     break;
                 };
             };
-
-            // Take all Items out of the Inventory
-            List<ItemStack> availableItemStacks = new ArrayList<>();
-            for (int slot = 0; slot < inventory.getSlots(); slot++) {
-                ItemStack stack = inventory.getStackInSlot(slot);
-                if (!stack.isEmpty()) availableItemStacks.add(stack.copy());
-            };
-
-            ReactionContext context = new ReactionContext(availableItemStacks, UVPower, false);
-
+            
             // Reacting
             if (!cachedMixture.isAtEquilibrium()) {
 
-                // Dissolve new items
-                availableItemStacks = cachedMixture.dissolveItems(context, fluidAmount);
-                inventory.clearContent(); // Clear all Items as they may get re-inserted
+            	// Take all Items out of the Inventory
+                List<ItemStack> availableItemStacks = new ArrayList<>();
+                for (int slot = 0; slot < inventory.getSlots(); slot++) {
+                    ItemStack stack = inventory.getStackInSlot(slot);
+                    if (!stack.isEmpty()) availableItemStacks.add(stack.copy());
+                };
+                inventory.clearContent();
+                
+                ReactionContext context = new ReactionContext(availableItemStacks, UVPower, false);
+            	
+                //availableItemStacks = cachedMixture.dissolveItems(context, fluidAmount);
 
+                //dissolve new items if necessary
+                Iterator<ItemStack> iter = availableItemStacks.iterator();
+                while(iter.hasNext()) {
+                	ItemStack stack = iter.next();
+                	Double current = cachedMixture.partiallyDissolvedItems.get(stack.getItem());
+                	if(current != null && current < 0) {
+                		if(stack.getCount() <= 1) {
+                			iter.remove();
+                		} else {
+                			stack.shrink(1);
+                		}
+                		cachedMixture.partiallyDissolvedItems.put(stack.getItem(), current + 1000d/fluidAmount);
+                	}
+                }
                 // React
-                context = new ReactionContext(availableItemStacks, UVPower, false); // Update the context
+                //context = new ReactionContext(availableItemStacks, UVPower, false); // Update the context
                 cachedMixture.reactForTick(context, getSimulationLevel());
                 shouldUpdateFluidMixture = true;
-
+                
+                //precipitate
+                for(Entry<Item, Double> solid : cachedMixture.partiallyDissolvedItems.entrySet()) {
+                	if(solid.getValue() > 1000d/fluidAmount) {
+                		availableItemStacks.add(new ItemStack(solid.getKey(), 1));
+                		solid.setValue(solid.getValue() - 1000d/fluidAmount);
+                	}
+                }
+                
                 if (!cachedMixture.isAtEquilibrium()) advancementBehaviour.awardDestroyAdvancement(DestroyAdvancementTrigger.USE_VAT);
-            };
-
-            // Put all Items back in the Inventory
-            for (ItemStack itemStack : availableItemStacks) {
-                ItemHandlerHelper.insertItemStacked(inventory, itemStack, false);
+                
+                // Put all Items back in the Inventory
+                for (ItemStack itemStack : availableItemStacks) {
+                	ItemHandlerHelper.insertItemStacked(inventory, itemStack, false);
+                };
             };
 
             if (shouldUpdateFluidMixture) {
@@ -296,13 +328,21 @@ public class VatControllerBlockEntity extends SmartBlockEntity implements IHaveL
 
         // Inventory
         inventory.deserializeNBT(tag.getCompound("Inventory"));
-
+        
         // Mixture
         if (clientPacket) {
             pressure.chase(tag.getFloat("Pressure"), 0.125f, Chaser.EXP);
             temperature.chase(tag.getFloat("Temperature"), 0.125f, Chaser.EXP);
             cachedMixtureBoiling = tag.getBoolean("AnythingBoiling");
             cachedMixtureReacting = tag.getBoolean("AnythingReacting");
+            if(tag.contains("LastTickReactions", Tag.TAG_LIST)) {
+            	ListTag reactions = tag.getList("LastTickReactions", Tag.TAG_COMPOUND);
+            	reactions.forEach(entry -> {
+            		LegacyReaction reaction = LegacyReaction.get(((CompoundTag) entry).getString("Reaction"));
+            		if(reaction == null) return;
+            		lastTickReactions.put(reaction, ((CompoundTag) entry).getFloat("MolesPerLiter") * getCapacity());
+            	});
+            }
         } else {
             if (tag.contains("VentPos", Tag.TAG_COMPOUND)) openVentPos = NbtUtils.readBlockPos(tag.getCompound("VentPos"));
             updateCachedMixture();
@@ -334,6 +374,14 @@ public class VatControllerBlockEntity extends SmartBlockEntity implements IHaveL
             tag.putFloat("Temperature", getTemperature());
             tag.putBoolean("AnythingBoiling", cachedMixture != null && cachedMixture.isBoiling());
             tag.putBoolean("AnythingReacting", cachedMixture != null && !cachedMixture.isAtEquilibrium());
+            if(cachedMixture != null && !cachedMixture.lastTickReactions.isEmpty()) {
+            	tag.put("LastTickReactions", NBTHelper.writeCompoundList(cachedMixture.lastTickReactions.entrySet().stream().toList(), entry -> {
+            		CompoundTag reactionTag = new CompoundTag();
+            		reactionTag.putString("Reaction", entry.getKey().getNameSpace() + ":" + entry.getKey().getId());
+            		reactionTag.putFloat("MolesPerLiter", entry.getValue().floatValue());
+            		return reactionTag;
+            	}));
+            }
         };
 
         if (openVentPos != null) tag.put("VentPos", NbtUtils.writeBlockPos(openVentPos));
@@ -637,7 +685,7 @@ public class VatControllerBlockEntity extends SmartBlockEntity implements IHaveL
         if (getGasTank().isEmpty()) {
             return getLiquidTank().getFluidAmount() == getLiquidTank().getCapacity() ? 0f : AIR_PRESSURE; // Return 0 for a vacuum, and normal air pressure for a full Vat
         };
-        return LegacyReaction.GAS_CONSTANT * 1000f * getTemperature() * ReadOnlyMixture.readNBT(ReadOnlyMixture::new, getGasTank().getFluid().getOrCreateChildTag("Mixture")).getTotalConcentration() - AIR_PRESSURE;
+        return (float) (LegacyReaction.GAS_CONSTANT * 1000f * getTemperature() * ReadOnlyMixture.readNBT(ReadOnlyMixture::new, getGasTank().getFluid().getOrCreateChildTag("Mixture")).getTotalConcentration() - AIR_PRESSURE);
     };
 
     /**

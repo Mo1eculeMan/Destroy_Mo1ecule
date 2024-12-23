@@ -17,7 +17,13 @@ public interface IItemReactant {
      * @param stack
      */
     public boolean isItemValid(ItemStack stack);
-
+    
+    /**
+     * This should return {@code true} if the Item is a valid reactant for this {@link LegacyReaction}.
+     * @param stack
+     */
+    public boolean isItemValid(Item item);
+    
     /**
      * Deal with 'consuming' this Item Stack - usually, this will involve shrinking the Stack by one,
      * but might also involve draining the Item Stacks durability. It should not leave the Item Stack
@@ -56,6 +62,11 @@ public interface IItemReactant {
         };
 
         @Override
+        public boolean isItemValid(Item item) {
+            return item.equals(this.item.get());
+        };
+        
+        @Override
         public List<ItemStack> getDisplayedItemStacks() {
             return List.of(new ItemStack(item.get()));
         };
@@ -91,6 +102,11 @@ public interface IItemReactant {
             return stack.is(tag);
         };
 
+        @Override
+        public boolean isItemValid(Item item) {
+            return item.builtInRegistryHolder().is(tag);
+        };
+        
         @Override
         public List<ItemStack> getDisplayedItemStacks() {
             ITag<Item> tagIterable = ForgeRegistries.ITEMS.tags().getTag(tag);

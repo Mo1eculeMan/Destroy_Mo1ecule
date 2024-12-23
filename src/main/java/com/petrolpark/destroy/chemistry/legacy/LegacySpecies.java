@@ -365,7 +365,7 @@ public class LegacySpecies implements INameableProduct {
      * @param subscript If {@code true}, Unicode subscript numbers will be used rather than ASCII numbers
      */
     @SuppressWarnings("unicode")
-    public String getSerlializedMolecularFormula(boolean subscript) {
+    public String getSerializedMolecularFormula(boolean subscript) {
         Map<LegacyElement, Integer> formulaMap = getMolecularFormula();
         List<LegacyElement> elements = new ArrayList<>(formulaMap.keySet());
         elements.sort(Comparator.naturalOrder()); //sort Elements based on their order of declaration
@@ -438,7 +438,7 @@ public class LegacySpecies implements INameableProduct {
      */
     @Override
     public Component getName(boolean iupac) {
-        if (isNovel()) return Component.literal(getSerlializedMolecularFormula(true));
+        if (isNovel()) return Component.literal(getSerializedMolecularFormula(true));
         return Component.translatable(getTranslationKey(iupac));
     };
 

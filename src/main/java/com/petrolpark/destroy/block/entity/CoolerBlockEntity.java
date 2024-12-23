@@ -96,7 +96,7 @@ public class CoolerBlockEntity extends SmartBlockEntity implements IHaveGoggleIn
             float totalMolesPerBucket = 0f;
             float totalRefrigerantMolesPerBucket = 0f;
             for (LegacySpecies molecule : mixture.getContents(true)) {
-                float concentration = mixture.getConcentrationOf(molecule);
+                double concentration = mixture.getConcentrationOf(molecule);
                 totalMolesPerBucket += concentration;
                 if (molecule.hasTag(DestroyMolecules.Tags.REFRIGERANT)) {
                     totalRefrigerantMolesPerBucket += concentration;

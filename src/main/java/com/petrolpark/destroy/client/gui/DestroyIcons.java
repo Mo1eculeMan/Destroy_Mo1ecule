@@ -39,7 +39,10 @@ public class DestroyIcons extends AllIcons {
 
 		VAT_SOLUTION = new DestroyIcons(0, 3),
 		VAT_GAS = new DestroyIcons(1, 3),
-		VAT_ALL = new DestroyIcons(2, 3);
+		VAT_ALL = new DestroyIcons(2, 3),
+		
+		VAT_SHOW_CONCENTRATION = new DestroyIcons(3, 3),
+		VAT_SHOW_AMOUNT = new DestroyIcons(4, 3);
 
 	private static final DestroyIcons[] redstoneProgrammerModeIcons = new DestroyIcons[RedstoneProgram.PlayMode.values().length];
 	static {

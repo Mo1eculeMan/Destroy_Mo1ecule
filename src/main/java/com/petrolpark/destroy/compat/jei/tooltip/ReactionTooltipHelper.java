@@ -12,6 +12,7 @@ import com.simibubi.create.foundation.item.TooltipHelper.Palette;
 import mezz.jei.api.gui.ingredient.IRecipeSlotRichTooltipCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 
 public class ReactionTooltipHelper {
 
@@ -38,6 +39,10 @@ public class ReactionTooltipHelper {
             } else {
                 tooltip.addAll(TooltipHelper.cutTextComponent(DestroyLang.translate("tooltip.reaction.product_ratio.plural", ratio).component(), Palette.GRAY_AND_WHITE));
             };
+            if(DestroyAllConfigs.CLIENT.chemistry.nerdMode.get() && reaction.getReverseReactionForDisplay().isPresent()) {
+            	LegacyReaction reverseReaction = reaction.getReverseReactionForDisplay().get();
+            	tooltip.addAll(TooltipHelper.cutTextComponent(DestroyLang.translate("tooltip.reaction.order", reverseReaction.getOrders().get(product)).component(), Palette.GRAY_AND_WHITE));
+            }
         };
     };
 
@@ -70,7 +75,6 @@ public class ReactionTooltipHelper {
     public static IRecipeSlotRichTooltipCallback nerdModeTooltip(LegacyReaction reaction) {
         return (view, tooltip) -> {
             boolean reversible = reaction.getReverseReactionForDisplay().isPresent();
-            tooltip.add(DestroyLang.translate("tooltip.reaction.kinetics_information").component());
             if (reaction.isHalfReaction()) tooltip.add(DestroyLang.translate("tooltip.reaction.standard_half_cell_potential", reaction.getStandardHalfCellPotential()).style(ChatFormatting.GRAY).component());
             if (reversible) tooltip.add(DestroyLang.translate("tooltip.reaction.forward").component());
             tooltip.add(Component.literal(reversible ? "  " : "").append(DestroyLang.translate("tooltip.reaction.activation_energy", reaction.getActivationEnergy()).style(ChatFormatting.GRAY).component()));
@@ -84,6 +88,17 @@ public class ReactionTooltipHelper {
                 tooltip.add(Component.literal("  ").append(DestroyLang.preexponentialFactor(reverseReaction)).withStyle(ChatFormatting.GRAY));
             };
         };
-    };
+    }
+
+	public static IRecipeSlotRichTooltipCallback itemProductTooltip(LegacyReaction reaction, Item item, double count) {
+        return (view, tooltip) -> {
+            tooltip.add(Component.literal(" "));
+            if (count == 1) {
+                tooltip.addAll(TooltipHelper.cutTextComponent(DestroyLang.translate("tooltip.reaction.item_product.single").component(), Palette.GRAY_AND_WHITE));
+            } else {
+                tooltip.addAll(TooltipHelper.cutTextComponent(DestroyLang.translate("tooltip.reaction.item_product.plural", count).component(), Palette.GRAY_AND_WHITE));
+            };
+        };
+	};
     
 };

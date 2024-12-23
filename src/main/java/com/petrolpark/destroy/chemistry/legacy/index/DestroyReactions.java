@@ -125,7 +125,7 @@ public class DestroyReactions {
     BORAX_DISSOLUTION = builder()
         .id("borax_dissolution")
         .addReactant(DestroyMolecules.PROTON, 2, 1)
-        .addSimpleItemTagCatalyst(AllTags.forgeItemTag("raw_materials/borax"), 16f)
+        .addSimpleItemTagReactant(AllTags.forgeItemTag("raw_materials/borax"), 16f)
         .addCatalyst(DestroyMolecules.CHLORIDE, 1)
         .addProduct(DestroyMolecules.SODIUM_ION, 2)
         .addProduct(DestroyMolecules.WATER, 5)
@@ -137,7 +137,8 @@ public class DestroyReactions {
         .addReactant(DestroyMolecules.SODIUM_ION, 2, 1)
         .addReactant(DestroyMolecules.WATER, 4, 1)
         .addReactant(DestroyMolecules.TETRAHYDROXY_TETRABORATE)
-        .withResult(15f, PrecipitateReactionResult.of(DestroyItems.BORAX::asStack))
+        .addItemProduct(DestroyItems.BORAX::get, 1/16f)
+        //.withResult(15f, PrecipitateReactionResult.of(DestroyItems.BORAX::asStack))
         .build(),
 
     BORIC_ACID_NEUTRALIZATION = builder()
@@ -171,7 +172,7 @@ public class DestroyReactions {
         .addReactant(DestroyMolecules.HYDROXIDE, 6)
         .addSimpleItemReactant(DestroyItems.ANIMAL_FAT, 2f)
         .addProduct(DestroyMolecules.GLYCEROL, 2)
-        .withResult(2f, PrecipitateReactionResult.of(DestroyItems.SOAP::asStack))
+        .withResult(0.5f, PrecipitateReactionResult.of(DestroyItems.SOAP::asStack))
         .build(),
 
     CARBIDE_HYDROLYSIS = builder()
@@ -190,7 +191,8 @@ public class DestroyReactions {
         .addReactant(DestroyMolecules.CARBON_DIOXIDE)
         .addReactant(DestroyMolecules.WATER)
         .addProduct(DestroyMolecules.PROTON, 2)
-        .withResult(2f, PrecipitateReactionResult.of(DestroyItems.CHALK_DUST::asStack))
+        .addItemProduct(DestroyItems.CHALK_DUST::get, 0.5f)
+        //.withResult(2f, PrecipitateReactionResult.of(DestroyItems.CHALK_DUST::asStack))
         .build(),
 
     CARBON_MONOXIDE_OXIDATION = builder()
@@ -520,7 +522,8 @@ public class DestroyReactions {
         .addProduct(DestroyMolecules.HYDROCHLORIC_ACID,4)
         .addProduct(DestroyMolecules.SODIUM_ION,3)
         .addProduct(DestroyMolecules.HYDROGENSULFATE,3)
-        .withResult(10f, PrecipitateReactionResult.of(DestroyItems.GOLD_POWDER::asStack))
+        .addItemProduct(DestroyItems.GOLD_POWDER::get, 0.1f)
+        //.withResult(10f, PrecipitateReactionResult.of(DestroyItems.GOLD_POWDER::asStack))
         .build(),
 
     HABER_PROCESS = builder()
@@ -573,12 +576,12 @@ public class DestroyReactions {
         .addReactant(DestroyMolecules.PROTON)
         .addProduct(DestroyMolecules.WATER)
         .activationEnergy(0f)// Assume diffusion limited; temperature-independent
-        .preexponentialFactor(1.3e8f) //TODO fiddle with values because currently Water is the most acidic substance in the mod
+        .preexponentialFactor(1.3e7f)
         .enthalpyChange(-55.3745f)
         .reverseReaction(reaction -> reaction
             .activationEnergy(55.3745f)
-            .preexponentialFactor(6.641220309e3f) // Two Arrhenius constants need to divide to 5.108631007
-            .setOrder(DestroyMolecules.WATER, 0)
+            .preexponentialFactor(6.641220309e2f) // Two Arrhenius constants need to divide to 5.108631007
+            .setOrder(DestroyMolecules.WATER, 0) //TODO order 2 perhaps???
         ).build(),
 
     HYPOCHLORITE_FORMATION = builder()
@@ -606,7 +609,8 @@ public class DestroyReactions {
         .addSimpleItemReactant(DestroyItems.IODINE::get, 2f)
         .addProduct(DestroyMolecules.IODINE)
         .reverseReaction(reaction -> reaction
-            .withResult(2.1f, PrecipitateReactionResult.of(DestroyItems.IODINE::asStack))
+        		.addItemProduct(DestroyItems.IODINE::get, 0.5f)
+            //.withResult(2.1f, PrecipitateReactionResult.of(DestroyItems.IODINE::asStack))
         )
         .build(),
 
@@ -617,7 +621,7 @@ public class DestroyReactions {
         .addProduct(DestroyMolecules.HYDROGEN, 3)
         .addProduct(DestroyMolecules.IRON_III, 2)
         .build(),
-
+        
     IRON_ORE_DISSOLUTION = builder() //TODO replace with redox
         .id("iron_ore_dissolution")
         .addReactant(DestroyMolecules.PROTON, 6, 1)
@@ -875,7 +879,8 @@ public class DestroyReactions {
         .activationEnergy(1f) // Very fast as long as Mercury is present
         .reverseReaction(r -> r
             .addCatalyst(DestroyMolecules.MERCURY, -1)
-            .withResult(10f, PrecipitateReactionResult.of(DestroyItems.SODIUM_INGOT::asStack))
+            .addItemProduct(DestroyItems.SODIUM_INGOT::get, 0.1f)
+            //.withResult(10f, PrecipitateReactionResult.of(DestroyItems.SODIUM_INGOT::asStack))
         )
         .build(),
 
@@ -903,13 +908,14 @@ public class DestroyReactions {
         .id("sodium_hydride_formation")
         .addReactant(DestroyMolecules.SODIUM_METAL, 2)
         .addReactant(DestroyMolecules.HYDROGEN)
-        .withResult(10f, PrecipitateReactionResult.of(DestroyItems.SODIUM_HYDRIDE::asStack))
+        .addItemProduct(DestroyItems.SODIUM_HYDRIDE::get, 0.1f)
+        //.withResult(10f, PrecipitateReactionResult.of(DestroyItems.SODIUM_HYDRIDE::asStack))
         .build(),
 
     SODIUM_HYDRIDE_HYDROLYSIS = builder()
         .id("sodium_hydride_hydrolysis")
         .addReactant(DestroyMolecules.WATER)
-        .addSimpleItemReactant(DestroyItems.SODIUM_HYDRIDE::get, 10.1f)
+        .addSimpleItemReactant(DestroyItems.SODIUM_HYDRIDE::get, 10f)
         .addProduct(DestroyMolecules.SODIUM_ION)
         .addProduct(DestroyMolecules.HYDROXIDE)
         .addProduct(DestroyMolecules.HYDROGEN)

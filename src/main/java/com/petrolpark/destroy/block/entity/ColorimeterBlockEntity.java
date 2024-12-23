@@ -111,7 +111,7 @@ public class ColorimeterBlockEntity extends SmartBlockEntity {
                 FluidStack mixtureStack = (observingGas ? vat.get().getGasTankContents() : vat.get().getLiquidTankContents());
                 if (DestroyFluids.isMixture(mixtureStack)) {
                     ReadOnlyMixture mixture = ReadOnlyMixture.readNBT(ReadOnlyMixture::new, mixtureStack.getOrCreateChildTag("Mixture"));
-                    return mixture.getConcentrationOf(molecule);
+                    return (float)mixture.getConcentrationOf(molecule);
                 };
                 return 0f;
             });

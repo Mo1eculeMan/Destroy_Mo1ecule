@@ -322,7 +322,7 @@ public class DestroyLang {
         };
     };
 
-    public static LangBuilder quantity(float quantity, boolean useMoles, DecimalFormat concentrationFormatter) {
+    public static LangBuilder quantity(double quantity, boolean useMoles, DecimalFormat concentrationFormatter) {
         String translationKey = useMoles ? "tooltip.mixture_contents.moles" : "tooltip.mixture_contents.concentration";
         double smallestVisibleQuantity = Math.pow(10, -concentrationFormatter.getMaximumFractionDigits());
         if (quantity != 0f) {
