@@ -212,7 +212,7 @@ public class ReactionCategory<T extends ReactionRecipe> extends HoverableTextCat
         if (DestroyAllConfigs.CLIENT.chemistry.nerdMode.get()) {
             builder.addSlot(RecipeIngredientRole.RENDER_ONLY, 163, 68)
                 .setOverlay(JEITextureDrawable.of(PetrolparkGuiTexture.JEI_NERD_EMOJI), 0, 1)
-                .addItemStack(DestroyItems.ABS.asStack().setHoverName(DestroyLang.translate("destroy.tooltip.reaction.kinetics_information").component())) // Dummy item so we actually get something generated
+                .addItemStack(DestroyItems.ABS.asStack().setHoverName(DestroyLang.translate("tooltip.reaction.kinetics_information").component())) // Dummy item so we actually get something generated
                 .addRichTooltipCallback(ReactionTooltipHelper.nerdModeTooltip(reaction));
         };
     };

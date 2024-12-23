@@ -1393,7 +1393,7 @@
     "destroy.tooltip.reaction.forward": "Forward:",
     "destroy.tooltip.reaction.item_reactant": "Allows _%1$s moles_ of reaction to occur",
     "destroy.tooltip.reaction.item_product.single": "_1 item_ is produced for every _mole_ of reaction",
-    "destroy.tooltip.reaction.item_product.plural": "_%1$s% items_ are produced for every _mole_ of reaction",
+    "destroy.tooltip.reaction.item_product.plural": "_%1$s items_ are produced for every _mole_ of reaction",
     "destroy.tooltip.reaction.kinetics_information": "Reaction Kinetics",
     "destroy.tooltip.reaction.order": "The order of reaction with respect to this species is _%1$s_",
     "destroy.tooltip.reaction.precipitate": "_%1$s moles_ of reaction required",
