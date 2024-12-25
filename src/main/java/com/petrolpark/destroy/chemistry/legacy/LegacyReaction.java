@@ -163,7 +163,7 @@ public class LegacyReaction {
     };
 
     /**
-     * Get the {@link IItemReactant required Items} for this Reaction.
+     * Get the {@link IItemReactant required Items} for this Reaction. Also includes catalysts. Use {@link IItemReactant#isCatalyst} to tell catalysts and reactants apart.
      */
     public List<IItemReactant> getItemReactants() {
         return itemReactants;

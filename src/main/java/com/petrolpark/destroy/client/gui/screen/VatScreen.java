@@ -228,9 +228,12 @@ public class VatScreen extends AbstractSimiScreen {
     	Collections.sort(orderedMoleculesLiquid, (p1, p2) -> Float.compare(p2.getSecond(), p1.getSecond()));
     	//solids
     	orderedSolids.clear();
+    	
     	Map<Item, Double> items = new HashMap<>();
-    	for(Entry<Item, Double> entry : mixture.partiallyDissolvedItems.entrySet()) {
-    		items.put(entry.getKey(), entry.getValue() * amountLiquid);
+    	if(mixture != null) {
+    		for(Entry<Item, Double> entry : mixture.partiallyDissolvedItems.entrySet()) {
+    			items.put(entry.getKey(), entry.getValue() * amountLiquid);
+    		}
     	}
     	for(int i = 0; i < blockEntity.inventory.getSlots(); i++) {
     		ItemStack stack = blockEntity.inventory.getStackInSlot(i);

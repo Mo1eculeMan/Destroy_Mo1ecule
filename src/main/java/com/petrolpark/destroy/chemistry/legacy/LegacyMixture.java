@@ -386,7 +386,7 @@ public class LegacyMixture extends ReadOnlyMixture {
                     for(Entry<Item, Double> pdItem : partiallyDissolvedItems.entrySet()) {
                     	if(itemReactant.isItemValid(pdItem.getKey()) && pdItem.getValue() > 0d) {
                     		validPDFound = true;
-                    		reactionsThatUsePDItems.add(possibleReaction);
+                    		if(!itemReactant.isCatalyst()) reactionsThatUsePDItems.add(possibleReaction);
                     		break;
                     	}
                     }
@@ -394,7 +394,7 @@ public class LegacyMixture extends ReadOnlyMixture {
                     	for (ItemStack stack : context.availableItemStacks) {
                     		if (itemReactant.isItemValid(stack)) {
                     			validStackFound = true; // ...If we do, correct this assumption
-                    			partiallyDissolvedItems.put(stack.getItem(), 0d);
+                    			if(!itemReactant.isCatalyst()) partiallyDissolvedItems.put(stack.getItem(), 0d);
                     			break;
                     		};
                     	};
@@ -422,6 +422,7 @@ public class LegacyMixture extends ReadOnlyMixture {
                 //Do the same for item reagents too
                 if(reactionsThatUsePDItems.contains(reaction)) {
                 	for (IItemReactant reactant : reaction.getItemReactants()) {
+                		if(reactant.isCatalyst()) continue;
                 		float totalMatchingConcentration = 0;
                 		for(Entry<Item, Double> pdItem : partiallyDissolvedItems.entrySet()) {
                 			if(reactant.isItemValid(pdItem.getKey())) totalMatchingConcentration += pdItem.getValue();
@@ -678,6 +679,7 @@ public class LegacyMixture extends ReadOnlyMixture {
             changeConcentrationOf(reactant, - (molesPerLiter * reaction.getReactantMolarRatio(reactant)), false); // Use up the right amount of all the reagents
         };
         for(IItemReactant itemReactant : reaction.getItemReactants()) {
+        	if(itemReactant.isCatalyst()) continue;
         	double requiredReduction = Constants.MILLIBUCKETS_PER_LITER * 1000 * molesPerLiter / reaction.getMolesPerItem();
         	List<Item> usedItems = new ArrayList<>();
         	double totalUsedItemConcentration = 0f;
